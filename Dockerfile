@@ -50,7 +50,7 @@ RUN conda env create -f=pygdf/conda_environments/notebook_py35.yml && conda clea
 RUN conda install conda-build=2.1.10 -y
 
 # Add h2oaiglm
-RUN source activate pycudf_notebook_py35 && \
+RUN /bin/bash -c "source activate pycudf_notebook_py35" && \
     pip install https://s3.amazonaws.com/h2o-beta-release/goai/h2oaiglm-0.0.1-py2.py3-none-any.whl && \
     pip install pandas seaborn psutil && \
     pip install -e "git+https://github.com/fbcotter/py3nvml#egg=py3nvml"

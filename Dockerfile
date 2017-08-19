@@ -100,5 +100,6 @@ COPY ./scripts scripts
 EXPOSE 9090 9091 9092 9093
 EXPOSE 8888
 
-CMD bash ./scripts/start.sh
+ENTRYPOINT ["./scripts/start.sh"]
+CMD ["--jupyter-args='--ip=*'"] 
 

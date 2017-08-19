@@ -6,13 +6,18 @@ ARG CONDA_VER="4.3.21"
 ARG NUMBA_VERSION="0.34"
 ARG MAPD_FILE="mapd-os-3.2.1dev-20170816-fd5eaf9-Linux-x86_64"
 ARG PYGDF_COMMIT="d5fcdec"
+ARG LIBGDF_COMMIT="21d35dc"
+ARG PYMAPD_COMMIT="422ee09"
 ENV CONDA_DIR /opt/conda
 ENV MAPD_DIR /opt/mapd
 ENV PATH $CONDA_DIR/bin:$PATH
 
 # Install basic tools and Java
 RUN apt-get update && \
-    apt-get install -y wget git vim openjdk-7-jre libopenblas-dev curl
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:openjdk-r/ppa && \
+    apt-get update && \
+    apt-get install -y wget git vim openjdk-8-jre libopenblas-dev curl
 
 # Install conda
 RUN cd /tmp && \
@@ -42,9 +47,13 @@ RUN wget https://jenkins-os.mapd.com/job/core-os/81/immerse=on,processor=cuda,sa
     rm ${MAPD_FILE}.tar.gz
 
 # Add user appuser
-# RUN useradd -ms /bin/bash appuser
-# USER appuser
-# WORKDIR /home/appuser
+RUN useradd -ms /bin/bash appuser
+
+RUN chown -R appuser $MAPD_DIR
+RUN chgrp -R appuser $MAPD_DIR
+
+USER appuser
+WORKDIR /home/appuser
 
 # Prepend path to libcuda and libjvm for mapd
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/amd64/server/:/usr/local/nvidia/lib64/:/usr/local/cuda/lib64/
@@ -61,8 +70,35 @@ RUN /bin/bash -c "source activate pycudf_notebook_py35 && \
     pip install pandas seaborn psutil && \
     pip install -e git+https://github.com/fbcotter/py3nvml#egg=py3nvml"
 
+# Add libgdf 
+# --recursive won't work due to a dead submodule branch
+RUN git clone https://github.com/gpuopenanalytics/libgdf.git && cd libgdf && git checkout $LIBGDF_COMMIT && \
+    cd thirdparty/cub/ && \
+    git clone https://github.com/NVlabs/cub.git . && \
+    git checkout 1.7.0 && \
+    cd ../moderngpu/ && \
+    git clone https://github.com/moderngpu/moderngpu.git . && \
+    git checkout c1fd31d && \
+    cd ../../ && \
+    /bin/bash -c "source activate pycudf_notebook_py35 && \
+    conda build --py 3.5 conda-recipes/libgdf && \
+    conda install -y --use-local libgdf && \
+    conda build --py 3.5 conda-recipes/libgdf_cffi && \
+    conda install -y --use-local libgdf_cffi && \
+    conda clean -iltpsy "
+
+# Add pymapd 
+RUN git clone https://github.com/mapd/pymapd.git && cd pymapd && git checkout $PYMAPD_COMMIT && \
+    /bin/bash -c "source activate pycudf_notebook_py35 && \
+    conda install -y pyarrow arrow-cpp setuptools_scm cython && \
+    python setup.py install && \
+    conda clean -iltpsy "
+
 # Add utils script
 COPY ./scripts scripts
+
+EXPOSE 9090 9091 9092 9093
+EXPOSE 8888
 
 CMD bash ./scripts/start.sh
 

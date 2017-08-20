@@ -64,6 +64,8 @@ RUN git clone https://github.com/gpuopenanalytics/pygdf && cd pygdf && git check
 RUN conda env create -f=pygdf/conda_environments/notebook_py35.yml && \
     conda clean -iltpsy
 
+RUN cp ./pygdf/notebooks ./notebooks
+
 # Add h2oaiglm
 RUN /bin/bash -c "source activate pycudf_notebook_py35 && \
     pip install https://s3.amazonaws.com/h2o-beta-release/goai/h2oaiglm-0.0.1-py2.py3-none-any.whl && \

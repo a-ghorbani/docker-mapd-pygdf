@@ -18,7 +18,7 @@ docker build --rm -t aghorbani/mapd-pygdf .
 ## Running the image
 
 ```
-docker run -it --rm \
+nvidia-docker run -it --rm \
     -p 8888:8888 \
     -p 9092:9092 \
     aghorbani/mapd-pygdf [--load-data] [--jupyter-args=<arguments for jupyter>]
@@ -37,7 +37,7 @@ Many time it is desirable to have data directories to be on the host volume.
 With the following command you can mount host directories for database data and jupyter notebook directory.
 
 ```
-docker run -it --rm \
+nvidia-docker run -it --rm \
     -p 8888:8888 \
     -p 9092:9092 \
     -v /PATH/TO/LOCAL/NB-DIR/:/home/appuser/notebooks/mein/ \
